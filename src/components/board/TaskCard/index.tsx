@@ -1,9 +1,10 @@
-import { Task, TaskPriority } from "@types/task";
+import { Task, TaskPriority } from "@domain/task";
 
 const priorityColor: Record<TaskPriority, string> = {
-  HIGH:   "text-red-400",
-  MEDIUM: "text-yellow-400",
-  LOW:    "text-green-400",
+  CRITICAL: "text-red-600",
+  HIGH:     "text-red-400",
+  MEDIUM:   "text-yellow-400",
+  LOW:      "text-green-400",
 };
 
 interface TaskCardProps {
@@ -39,7 +40,7 @@ export function TaskCard({ task, isDragging, onDragStart, onDragEnd, onClick }: 
             <div className="w-1 h-1 rounded-full bg-green-400" />
           </div>
           <span className="text-[11px] text-gh-muted font-mono">
-            pulltask <span className={`font-semibold ${priorityColor[task.priority]}`}>#{task.taskId}</span>
+            pulltask <span className={`font-semibold ${priorityColor[task.priority]}`}>#{task.taskNumber}</span>
           </span>
         </div>
         {task.assigneeInitials && (

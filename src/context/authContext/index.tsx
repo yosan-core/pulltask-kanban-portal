@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { AuthUser } from "@types/task";
+import { AuthUser } from "@domain/task";
 import { environment } from "@config/environment";
 
 const TOKEN_KEY = "pulltask_token";

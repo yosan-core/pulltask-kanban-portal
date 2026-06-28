@@ -1,10 +1,11 @@
-import { Task, TaskStatus, TaskPriority } from "@types/task";
+import { Task, TaskStatus, TaskPriority } from "@domain/task";
 import { COLUMNS } from "@pages/board/config";
 
 const priorityConfig: Record<TaskPriority, { label: string; dot: string }> = {
-  HIGH:   { label: "Alta",  dot: "bg-red-400" },
-  MEDIUM: { label: "Media", dot: "bg-yellow-400" },
-  LOW:    { label: "Baja",  dot: "bg-green-400" },
+  CRITICAL: { label: "Crítica", dot: "bg-red-600" },
+  HIGH:     { label: "Alta",    dot: "bg-red-400" },
+  MEDIUM:   { label: "Media",   dot: "bg-yellow-400" },
+  LOW:      { label: "Baja",    dot: "bg-green-400" },
 };
 
 const statusConfig: Record<TaskStatus, { label: string; dot: string }> = {
@@ -45,7 +46,7 @@ export function TaskDetail({ task, onClose, onStatusChange }: TaskDetailProps) {
             {/* Header */}
             <div className="flex items-start justify-between px-6 py-4 border-b border-gh-border">
               <div>
-                <span className="text-[11px] font-mono text-gh-muted">#{task.taskId}</span>
+                <span className="text-[11px] font-mono text-gh-muted">#{task.taskNumber}</span>
                 <h2 className="text-base font-semibold text-gh-text mt-1 leading-snug">
                   {task.title}
                 </h2>

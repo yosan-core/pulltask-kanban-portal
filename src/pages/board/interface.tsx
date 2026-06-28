@@ -1,30 +1,41 @@
-import { Task, TaskStatus } from "@types/task";
+import { Task, TaskStatus } from "@domain/task";
+import { BoardContext } from "@domain/board";
 import { COLUMNS } from "./config";
 import { KanbanColumn } from "@components/board/KanbanColumn";
 import { TaskDetail } from "@components/board/TaskDetail";
+import { NewTaskForm } from "@components/board/NewTaskForm";
 import { useAuthContext } from "@context/authContext";
 
 interface BoardUIProps {
-  tasks: Task[];
-  projectName: string;
-  draggingId: string | null;
-  dragOverColumn: TaskStatus | null;
-  selectedTask: Task | null;
-  onDragStart: (taskId: string) => void;
-  onDragEnd: () => void;
+  tasks:            Task[];
+  board:            BoardContext | null;
+  projectName:      string;
+  serviceError:     string | null;
+  draggingId:       string | null;
+  dragOverColumn:   TaskStatus | null;
+  selectedTask:     Task | null;
+  showNewTask:      boolean;
+  onDragStart:      (taskId: string) => void;
+  onDragEnd:        () => void;
   onDragOverColumn: (columnId: TaskStatus) => void;
-  onDrop: (targetStatus: TaskStatus) => void;
-  onCardClick: (taskId: string) => void;
-  onCloseDetail: () => void;
-  onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
+  onDrop:           (targetStatus: TaskStatus) => void;
+  onCardClick:      (taskId: string) => void;
+  onCloseDetail:    () => void;
+  onStatusChange:   (taskId: string, newStatus: TaskStatus) => void;
+  onNewTask:        () => void;
+  onCloseNewTask:   () => void;
+  onTaskSaved:      () => void;
 }
 
 export function BoardUI({
   tasks,
+  board,
   projectName,
+  serviceError,
   draggingId,
   dragOverColumn,
   selectedTask,
+  showNewTask,
   onDragStart,
   onDragEnd,
   onDragOverColumn,
@@ -32,6 +43,9 @@ export function BoardUI({
   onCardClick,
   onCloseDetail,
   onStatusChange,
+  onNewTask,
+  onCloseNewTask,
+  onTaskSaved,
 }: BoardUIProps) {
   const { user, signOut } = useAuthContext();
 
@@ -71,7 +85,10 @@ export function BoardUI({
       <div className="px-6 py-4 border-b border-gh-border flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-semibold text-gh-text">{projectName}</h1>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gh-blue text-white text-sm font-medium hover:brightness-110 transition-all">
+          <button
+            onClick={onNewTask}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gh-blue text-white text-sm font-medium hover:brightness-110 transition-all"
+          >
             + Nueva tarea
           </button>
         </div>
@@ -94,6 +111,14 @@ export function BoardUI({
           </button>
         </div>
       </div>
+
+      {/* Error banner */}
+      {serviceError && (
+        <div className="px-6 py-2 bg-red-500/10 border-b border-red-500/20 flex items-center gap-2 flex-shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+          <p className="text-xs text-red-400">{serviceError} — verifica que los servicios estén corriendo.</p>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="px-6 py-2 border-b border-gh-border flex-shrink-0">
@@ -134,6 +159,16 @@ export function BoardUI({
         task={selectedTask}
         onClose={onCloseDetail}
         onStatusChange={onStatusChange}
+      />
+
+      {/* Panel de nueva tarea */}
+      <NewTaskForm
+        open={showNewTask}
+        board={board}
+        tasks={tasks}
+        user={user}
+        onClose={onCloseNewTask}
+        onSaved={onTaskSaved}
       />
     </div>
   );

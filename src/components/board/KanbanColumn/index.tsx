@@ -1,4 +1,4 @@
-import { Task, TaskStatus } from "@types/task";
+import { Task, TaskStatus } from "@domain/task";
 import { ColumnConfig } from "@pages/board/config";
 import { TaskCard } from "@components/board/TaskCard";
 

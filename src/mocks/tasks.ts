@@ -1,8 +1,9 @@
-import { Task } from "@types/task";
+import { Task } from "@domain/task";
 
 export const mockTasks: Task[] = [
   {
     taskId: "t-001",
+    taskNumber: 1,
     title: "Diseñar modelo de datos de tareas",
     description: "Definir la estructura de la entidad Task en el backend Go",
     status: "DONE",
@@ -15,6 +16,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-002",
+    taskNumber: 2,
     title: "Implementar endpoint de registro",
     description: "POST /user-accounts con X-Action: RegisterUserAccount",
     status: "DONE",
@@ -27,6 +29,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-003",
+    taskNumber: 3,
     title: "Scaffoldar pulltask-auth-portal",
     description: "Crear proyecto React con Vite + Tailwind para el portal de auth",
     status: "DONE",
@@ -39,6 +42,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-004",
+    taskNumber: 4,
     title: "Crear servicio de tareas en Go",
     description: "Nuevo microservicio pulltask-task-process-service con CRUD de tareas",
     status: "TODO",
@@ -51,6 +55,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-005",
+    taskNumber: 5,
     title: "Implementar drag & drop en el tablero",
     description: "Permitir mover tarjetas entre columnas arrastrando",
     status: "TODO",
@@ -61,6 +66,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-006",
+    taskNumber: 6,
     title: "Diseñar pantalla de detalle de tarea",
     description: "Modal o página con comentarios, historial y adjuntos",
     status: "TODO",
@@ -71,6 +77,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-007",
+    taskNumber: 7,
     title: "Scaffoldar pulltask-kanban-portal",
     description: "Crear proyecto React con tablero Kanban y datos mockeados",
     status: "IN_PROGRESS",
@@ -83,6 +90,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-008",
+    taskNumber: 8,
     title: "Conectar kanban-portal con API real",
     description: "Reemplazar mocks por llamadas Axios al servicio de tareas",
     status: "IN_PROGRESS",
@@ -93,6 +101,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-009",
+    taskNumber: 9,
     title: "Revisar seguridad del endpoint de login",
     description: "Validar timing attack fix y errores unificados",
     status: "REVIEW",
@@ -105,6 +114,7 @@ export const mockTasks: Task[] = [
   },
   {
     taskId: "t-010",
+    taskNumber: 10,
     title: "Agregar filtros al tablero",
     description: "Filtrar por asignado, prioridad y etiqueta",
     status: "REVIEW",

@@ -1,51 +1,60 @@
 import { useState } from "react";
-import { Task, TaskStatus } from "@types/task";
-import { mockTasks } from "@mocks/tasks";
+import { TaskStatus } from "@domain/task";
+import { useTasks } from "@hooks/useTasks";
+import { useBoard } from "@hooks/useBoard";
 import { BoardUI } from "./interface";
 
 export function BoardPage() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const { board, loading: boardLoading, error: boardError } = useBoard();
+  const { tasks, loading: tasksLoading, error: tasksError, updateStatus, reload } = useTasks();
+
+  const [draggingId,     setDraggingId]     = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn]  = useState<TaskStatus | null>(null);
+  const [selectedTaskId, setSelectedTaskId]  = useState<string | null>(null);
+  const [showNewTask,    setShowNewTask]     = useState(false);
 
   const selectedTask = tasks.find((t) => t.taskId === selectedTaskId) ?? null;
+  const loading      = boardLoading || tasksLoading;
+  const serviceError = boardError ?? tasksError;
 
-  const handleDragStart = (taskId: string) => setDraggingId(taskId);
-
-  const handleDragEnd = () => {
-    setDraggingId(null);
-    setDragOverColumn(null);
-  };
-
-  const handleDragOverColumn = (columnId: TaskStatus) => setDragOverColumn(columnId);
+  const handleDragStart      = (taskId: string)   => setDraggingId(taskId);
+  const handleDragEnd        = ()                  => { setDraggingId(null); setDragOverColumn(null); };
+  const handleDragOverColumn = (col: TaskStatus)   => setDragOverColumn(col);
 
   const handleDrop = (targetStatus: TaskStatus) => {
     if (!draggingId) return;
-    setTasks((prev) =>
-      prev.map((t) => (t.taskId === draggingId ? { ...t, status: targetStatus } : t))
-    );
+    updateStatus(draggingId, targetStatus);
     setDraggingId(null);
     setDragOverColumn(null);
   };
 
-  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.taskId === taskId ? { ...t, status: newStatus } : t))
-    );
-    // Cuando el backend esté listo: llamar al servicio aquí
-  };
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) =>
+    updateStatus(taskId, newStatus);
 
-  const handleCardClick = (taskId: string) => setSelectedTaskId(taskId);
-  const handleCloseDetail = () => setSelectedTaskId(null);
+  const handleCardClick    = (taskId: string) => setSelectedTaskId(taskId);
+  const handleCloseDetail  = ()               => setSelectedTaskId(null);
+  const handleNewTask      = ()               => setShowNewTask(true);
+  const handleCloseNewTask = ()               => setShowNewTask(false);
+  const handleTaskSaved    = ()               => { setShowNewTask(false); reload(); };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gh-surface text-gh-muted text-sm">
+        Cargando tablero…
+      </div>
+    );
+  }
 
   return (
     <BoardUI
       tasks={tasks}
-      projectName="PullTask — Sprint 1"
+      board={board}
+      projectName={board?.boardName ?? "PullTask"}
+      serviceError={serviceError}
       draggingId={draggingId}
       dragOverColumn={dragOverColumn}
       selectedTask={selectedTask}
+      showNewTask={showNewTask}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragOverColumn={handleDragOverColumn}
@@ -53,6 +62,9 @@ export function BoardPage() {
       onCardClick={handleCardClick}
       onCloseDetail={handleCloseDetail}
       onStatusChange={handleStatusChange}
+      onNewTask={handleNewTask}
+      onCloseNewTask={handleCloseNewTask}
+      onTaskSaved={handleTaskSaved}
     />
   );
 }

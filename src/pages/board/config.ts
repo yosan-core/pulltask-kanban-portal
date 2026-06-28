@@ -1,4 +1,4 @@
-import { TaskStatus } from "@types/task";
+import { TaskStatus } from "@domain/task";
 
 export interface ColumnConfig {
   id: TaskStatus;
