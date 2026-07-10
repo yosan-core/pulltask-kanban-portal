@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  server: { port: 5174, strictPort: true },
   resolve: {
     alias: {
       "@assets":     fileURLToPath(new URL("./src/assets",     import.meta.url)),

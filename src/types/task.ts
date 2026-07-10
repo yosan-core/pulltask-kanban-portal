@@ -32,6 +32,7 @@ export interface Task {
   status:            TaskStatus;
   priority:          TaskPriority;
   taskNumber:        number;
+  taskPosition:      number;
   assigneeName?:     string;
   assigneeInitials?: string;
   dueDate?:          string;
@@ -41,11 +42,51 @@ export interface Task {
 }
 
 export interface AuthUser {
-  userId:    string;
-  email:     string;
-  names:     string;
-  token:     string;
-  expiresAt: string;
+  userAccountId:   string;
+  userAccountRole: string;
+  token:           string;
+  expiresAt:       string;
+}
+
+// Raw shape returned by auth-query-process-service
+export interface ApiUserProfile {
+  userAccountId:            string;
+  userAccount:              string;
+  accountName?:             string;
+  names?:                   string;
+  surnames?:                string;
+  email?:                   string;
+  userAccountRole:          string;
+  userAccountCreationDate?: string;
+  userAccountStatus?:       string;
+  mainOriginatorCode?:      string;
+  mainOriginatorName?:      string;
+}
+
+export interface UserProfile {
+  userAccountId:      string;
+  userAccount:        string;
+  fullName:           string;
+  email?:             string;
+  role:               string;
+  status?:            string;
+  mainOriginatorName?: string;
+  creationDate?:      string;
+}
+
+export function apiUserProfileToUserProfile(api: ApiUserProfile): UserProfile {
+  const fullName = [api.names, api.surnames].filter(Boolean).join(" ").trim();
+
+  return {
+    userAccountId:      api.userAccountId,
+    userAccount:        api.userAccount,
+    fullName:           fullName || api.accountName || api.userAccount,
+    email:              api.email,
+    role:               api.userAccountRole,
+    status:             api.userAccountStatus,
+    mainOriginatorName: api.mainOriginatorName,
+    creationDate:       api.userAccountCreationDate ? api.userAccountCreationDate.split("T")[0] : undefined,
+  };
 }
 
 // Mapping helpers
@@ -80,7 +121,8 @@ export function apiTaskToTask(api: ApiTask): Task {
     description: api.taskDescription ?? "",
     status,
     priority,
-    taskNumber: api.taskNumber,
+    taskNumber:   api.taskNumber,
+    taskPosition: api.taskPosition,
     assigneeName,
     assigneeInitials,
     dueDate:   api.dueDate ? api.dueDate.split("T")[0] : undefined,

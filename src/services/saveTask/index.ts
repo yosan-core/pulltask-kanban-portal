@@ -49,7 +49,7 @@ async function saveTask(
     taskPriority:      PRIORITY_TO_API[priority],
     taskStatus:        status,
     taskPosition,
-    createdBy:         user.userId,
+    createdBy:         user.userAccountId,
     taskCreationDate:  now,
     taskUpdatedDate:   now,
   };

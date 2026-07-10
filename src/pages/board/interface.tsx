@@ -4,6 +4,7 @@ import { COLUMNS } from "./config";
 import { KanbanColumn } from "@components/board/KanbanColumn";
 import { TaskDetail } from "@components/board/TaskDetail";
 import { NewTaskForm } from "@components/board/NewTaskForm";
+import { ProfileMenu } from "@components/layout/ProfileMenu";
 import { useAuthContext } from "@context/authContext";
 
 interface BoardUIProps {
@@ -13,15 +14,20 @@ interface BoardUIProps {
   serviceError:     string | null;
   draggingId:       string | null;
   dragOverColumn:   TaskStatus | null;
+  dragOverCardId:   string | null;
+  dragPosition:     "top" | "bottom" | null;
   selectedTask:     Task | null;
   showNewTask:      boolean;
   onDragStart:      (taskId: string) => void;
   onDragEnd:        () => void;
   onDragOverColumn: (columnId: TaskStatus) => void;
+  onDragOverCard:   (cardId: string, pos: "top" | "bottom") => void;
   onDrop:           (targetStatus: TaskStatus) => void;
   onCardClick:      (taskId: string) => void;
+  onRemoveTask:     (taskId: string) => void;
   onCloseDetail:    () => void;
   onStatusChange:   (taskId: string, newStatus: TaskStatus) => void;
+  onSaveTask:       (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) => void;
   onNewTask:        () => void;
   onCloseNewTask:   () => void;
   onTaskSaved:      () => void;
@@ -34,27 +40,25 @@ export function BoardUI({
   serviceError,
   draggingId,
   dragOverColumn,
+  dragOverCardId,
+  dragPosition,
   selectedTask,
   showNewTask,
   onDragStart,
   onDragEnd,
   onDragOverColumn,
+  onDragOverCard,
   onDrop,
   onCardClick,
+  onRemoveTask,
   onCloseDetail,
   onStatusChange,
+  onSaveTask,
   onNewTask,
   onCloseNewTask,
   onTaskSaved,
 }: BoardUIProps) {
-  const { user, signOut } = useAuthContext();
-
-  const initials = user?.names
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() ?? "?";
+  const { user } = useAuthContext();
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gh-surface">
@@ -72,12 +76,7 @@ export function BoardUI({
           <span className="text-gh-text font-semibold">{projectName}</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={signOut} className="text-xs text-gh-muted hover:text-gh-text transition-colors">
-            Cerrar sesión
-          </button>
-          <div className="w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center">
-            {initials}
-          </div>
+          <ProfileMenu />
         </div>
       </header>
 
@@ -144,11 +143,15 @@ export function BoardUI({
               tasks={tasks.filter((t) => t.status === col.id)}
               isDragOver={dragOverColumn === col.id}
               draggingId={draggingId}
+              dragOverCardId={dragOverCardId}
+              dragPosition={dragPosition}
               onDragStart={onDragStart}
               onDragEnd={onDragEnd}
               onDragOver={onDragOverColumn}
+              onDragOverCard={onDragOverCard}
               onDrop={onDrop}
               onCardClick={onCardClick}
+              onRemoveTask={onRemoveTask}
             />
           ))}
         </div>
@@ -159,6 +162,7 @@ export function BoardUI({
         task={selectedTask}
         onClose={onCloseDetail}
         onStatusChange={onStatusChange}
+        onSaveTask={onSaveTask}
       />
 
       {/* Panel de nueva tarea */}
