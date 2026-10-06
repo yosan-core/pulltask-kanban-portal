@@ -27,8 +27,9 @@ interface BoardUIProps {
   onRemoveTask:     (taskId: string) => void;
   onCloseDetail:    () => void;
   onStatusChange:   (taskId: string, newStatus: TaskStatus) => void;
-  onSaveTask:       (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) => void;
-  onNewTask:        () => void;
+  onSaveTask:       (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) => void;
+  newTaskStatus:    TaskStatus | null;
+  onAddClick:       (columnId: TaskStatus) => void;
   onCloseNewTask:   () => void;
   onTaskSaved:      () => void;
 }
@@ -54,7 +55,8 @@ export function BoardUI({
   onCloseDetail,
   onStatusChange,
   onSaveTask,
-  onNewTask,
+  newTaskStatus,
+  onAddClick,
   onCloseNewTask,
   onTaskSaved,
 }: BoardUIProps) {
@@ -84,12 +86,6 @@ export function BoardUI({
       <div className="px-6 py-4 border-b border-gh-border flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-semibold text-gh-text">{projectName}</h1>
-          <button
-            onClick={onNewTask}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gh-blue text-white text-sm font-medium hover:brightness-110 transition-all"
-          >
-            + Nueva tarea
-          </button>
         </div>
         <div className="flex items-center gap-1">
           {["Sprint 1", "Sprint 2"].map((sprint, i) => (
@@ -152,6 +148,7 @@ export function BoardUI({
               onDrop={onDrop}
               onCardClick={onCardClick}
               onRemoveTask={onRemoveTask}
+              onAddClick={onAddClick}
             />
           ))}
         </div>
@@ -171,6 +168,7 @@ export function BoardUI({
         board={board}
         tasks={tasks}
         user={user}
+        defaultStatus={newTaskStatus ?? undefined}
         onClose={onCloseNewTask}
         onSaved={onTaskSaved}
       />

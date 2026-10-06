@@ -1,16 +1,17 @@
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { TaskPriority, TaskStatus, Task, AuthUser } from "@domain/task";
 import { BoardContext } from "@domain/board";
 import { saveTask } from "@services/saveTask";
 import { useHeaders } from "@hooks/useHeaders";
 
 interface NewTaskFormProps {
-  open:    boolean;
-  board:   BoardContext | null;
-  tasks:   Task[];
-  user:    AuthUser | null;
-  onClose: () => void;
-  onSaved: () => void;
+  open:          boolean;
+  board:         BoardContext | null;
+  tasks:         Task[];
+  user:          AuthUser | null;
+  defaultStatus?: TaskStatus;
+  onClose:       () => void;
+  onSaved:       () => void;
 }
 
 const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
@@ -27,7 +28,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "DONE",        label: "Completado"   },
 ];
 
-export function NewTaskForm({ open, board, tasks, user, onClose, onSaved }: NewTaskFormProps) {
+export function NewTaskForm({ open, board, tasks, user, defaultStatus, onClose, onSaved }: NewTaskFormProps) {
   const [title,       setTitle]       = useState("");
   const [description, setDescription] = useState("");
   const [priority,    setPriority]    = useState<TaskPriority>("MEDIUM");
@@ -36,6 +37,10 @@ export function NewTaskForm({ open, board, tasks, user, onClose, onSaved }: NewT
   const [error,       setError]       = useState<string | null>(null);
 
   const { getHeaders } = useHeaders();
+
+  useEffect(() => {
+    if (open) setStatus(defaultStatus ?? "TODO");
+  }, [open, defaultStatus]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -68,21 +73,17 @@ export function NewTaskForm({ open, board, tasks, user, onClose, onSaved }: NewT
     }
   };
 
-  return (
-    <>
-      {/* Overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40"
-          onClick={onClose}
-        />
-      )}
+  if (!open) return null;
 
-      {/* Panel */}
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 z-40 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Modal */}
       <div
-        className={`fixed top-0 right-0 h-full w-[420px] bg-gh-card border-l border-gh-border shadow-2xl z-50 flex flex-col transition-transform duration-200 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[520px] max-h-[85vh] bg-gh-card border border-gh-border rounded-lg shadow-2xl z-50 flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gh-border flex-shrink-0">
@@ -187,6 +188,6 @@ export function NewTaskForm({ open, board, tasks, user, onClose, onSaved }: NewT
           </div>
         </form>
       </div>
-    </>
+    </div>
   );
 }

@@ -35,6 +35,7 @@ export interface Task {
   taskPosition:      number;
   assigneeName?:     string;
   assigneeInitials?: string;
+  assigneeProfilePictureUrl?: string;
   dueDate?:          string;
   tags?:             string[];
   createdAt:         string;
@@ -61,6 +62,7 @@ export interface ApiUserProfile {
   userAccountStatus?:       string;
   mainOriginatorCode?:      string;
   mainOriginatorName?:      string;
+  profilePictureUrl?:       string;
 }
 
 export interface UserProfile {
@@ -72,6 +74,7 @@ export interface UserProfile {
   status?:            string;
   mainOriginatorName?: string;
   creationDate?:      string;
+  profilePictureUrl?: string;
 }
 
 export function apiUserProfileToUserProfile(api: ApiUserProfile): UserProfile {
@@ -86,7 +89,18 @@ export function apiUserProfileToUserProfile(api: ApiUserProfile): UserProfile {
     status:             api.userAccountStatus,
     mainOriginatorName: api.mainOriginatorName,
     creationDate:       api.userAccountCreationDate ? api.userAccountCreationDate.split("T")[0] : undefined,
+    profilePictureUrl:  api.profilePictureUrl,
   };
+}
+
+// ─── Update profile picture ────────────────────────────────────────────────
+
+export type ProfilePictureOperation = "Update" | "Delete";
+
+export interface UpdateProfilePicturePayload {
+  userAccountId:   string;
+  profilePicture?: File;
+  operation?:      ProfilePictureOperation;
 }
 
 // Mapping helpers
