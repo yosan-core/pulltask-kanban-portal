@@ -37,7 +37,10 @@ async function saveTask(
     tasks.length > 0
       ? Math.max(...tasks.map((t) => t.taskNumber ?? 0)) + 1
       : 1;
-  const taskPosition = tasks.filter((t) => t.status === status).length + 1;
+  const colTasks = tasks.filter((t) => t.status === status);
+  const taskPosition = colTasks.length > 0
+    ? Math.max(...colTasks.map((t) => t.taskPosition)) + 1000
+    : 1000;
 
   const body = {
     taskId:            crypto.randomUUID(),

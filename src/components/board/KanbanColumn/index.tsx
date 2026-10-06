@@ -16,6 +16,7 @@ interface KanbanColumnProps {
   onDrop: (targetStatus: TaskStatus) => void;
   onCardClick: (taskId: string) => void;
   onRemoveTask: (taskId: string) => void;
+  onAddClick: (columnId: TaskStatus) => void;
 }
 
 export function KanbanColumn({
@@ -32,9 +33,10 @@ export function KanbanColumn({
   onDrop,
   onCardClick,
   onRemoveTask,
+  onAddClick,
 }: KanbanColumnProps) {
   return (
-    <div className="flex flex-col w-96 flex-shrink-0 rounded-lg border border-gh-border bg-gh-bg overflow-hidden">
+    <div className="group flex flex-col w-96 flex-shrink-0 rounded-lg border border-gh-border bg-gh-bg overflow-hidden">
       {/* Header — tono más claro que el body */}
       <div className="px-3 pt-1 pb-0 bg-[#000000]"> {/*21262d*/}
         <div className="flex items-center justify-between">
@@ -49,7 +51,10 @@ export function KanbanColumn({
             <button className="text-gh-muted hover:text-gh-text w-6 h-6 flex items-center justify-center rounded hover:bg-gh-card transition-colors text-xs">
               •••
             </button>
-            <button className="text-gh-muted hover:text-gh-text w-6 h-6 flex items-center justify-center rounded hover:bg-gh-card transition-colors font-bold">
+            <button
+              onClick={() => onAddClick(column.id)}
+              className="text-gh-muted hover:text-gh-text w-6 h-6 flex items-center justify-center rounded hover:bg-gh-card transition-colors font-bold"
+            >
               +
             </button>
           </div>
@@ -99,6 +104,13 @@ export function KanbanColumn({
             )}
           </>
         )}
+
+        <button
+          onClick={() => onAddClick(column.id)}
+          className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-xs text-gh-muted hover:text-gh-text px-1 py-1.5 rounded hover:bg-gh-card"
+        >
+          <span className="font-bold">+</span> Agregar elemento
+        </button>
       </div>
     </div>
   );

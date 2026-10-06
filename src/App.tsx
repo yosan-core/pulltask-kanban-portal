@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@pages/protectedRoute";
 import { BoardPage } from "@pages/board";
+import { ProfilePage } from "@pages/profile";
 import { environment } from "@config/environment";
 import { useAuthContext } from "@context/authContext";
 
@@ -38,6 +39,14 @@ function App() {
         element={
           <ProtectedRoute>
             <BoardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

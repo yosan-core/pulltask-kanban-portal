@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { Task, TaskPriority } from "@domain/task";
 
-const priorityColor: Record<TaskPriority, string> = {
-  CRITICAL: "text-red-600",
-  HIGH:     "text-red-400",
-  MEDIUM:   "text-yellow-400",
-  LOW:      "text-green-400",
+const priorityConfig: Record<TaskPriority, { label: string; badge: string }> = {
+  CRITICAL: { label: "Crítica", badge: "bg-red-600/15 text-red-400 border-red-600/40" },
+  HIGH:     { label: "Alta",    badge: "bg-red-400/15 text-red-300 border-red-400/40" },
+  MEDIUM:   { label: "Media",   badge: "bg-yellow-400/15 text-yellow-300 border-yellow-400/40" },
+  LOW:      { label: "Baja",    badge: "bg-green-400/15 text-green-300 border-green-400/40" },
 };
 
 interface TaskCardProps {
@@ -61,7 +61,7 @@ export function TaskCard({ task, isDragging, onDragStart, onDragEnd, onClick, on
             <div className="w-1 h-1 rounded-full bg-green-400" />
           </div>
           <span className="text-[11px] text-gh-muted font-mono">
-            pulltask <span className={`font-semibold ${priorityColor[task.priority]}`}>#{task.taskNumber}</span>
+            pulltask <span className="font-semibold">#{task.taskNumber}</span>
           </span>
         </div>
 
@@ -105,8 +105,12 @@ export function TaskCard({ task, isDragging, onDragStart, onDragEnd, onClick, on
           </div>
 
           {task.assigneeInitials && (
-            <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[8px] font-bold flex items-center justify-center">
-              {task.assigneeInitials}
+            <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[8px] font-bold flex items-center justify-center overflow-hidden">
+              {task.assigneeProfilePictureUrl ? (
+                <img src={task.assigneeProfilePictureUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                task.assigneeInitials
+              )}
             </div>
           )}
         </div>
@@ -167,6 +171,9 @@ export function TaskCard({ task, isDragging, onDragStart, onDragEnd, onClick, on
       {/* Tags + due date */}
       <div className="flex items-center justify-between flex-wrap gap-1 mt-1">
         <div className="flex flex-wrap gap-1">
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${priorityConfig[task.priority].badge}`}>
+            {priorityConfig[task.priority].label}
+          </span>
           {task.tags?.map((tag) => (
             <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full border border-gh-border text-gh-muted">
               {tag}

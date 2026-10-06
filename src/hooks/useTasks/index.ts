@@ -12,7 +12,7 @@ interface UseTasksResult {
   updateStatus: (taskId: string, newStatus: TaskStatus) => Promise<void>;
   reorderTask:  (draggingId: string, targetCardId: string | null, insertPos: "top" | "bottom" | null, targetStatus: TaskStatus) => Promise<void>;
   removeTask:   (taskId: string) => Promise<void>;
-  updateTask:   (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) => Promise<void>;
+  updateTask:   (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) => Promise<void>;
   reload:       () => void;
 }
 
@@ -28,9 +28,10 @@ export function useTasks(): UseTasksResult {
 
   useEffect(() => {
     let cancelled = false;
+    const isInitialLoad = tick === 0;
 
     const fetchTasks = async () => {
-      setLoading(true);
+      if (isInitialLoad) setLoading(true);
       setError(null);
       try {
         const apiTasks = await searchAllTasks(getHeaders());
@@ -43,7 +44,7 @@ export function useTasks(): UseTasksResult {
           console.error("[useTasks] fetch error:", err);
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && isInitialLoad) setLoading(false);
       }
     };
 
@@ -102,13 +103,14 @@ export function useTasks(): UseTasksResult {
           ? colTasks[colTasks.length - 1].taskPosition + 1000
           : 1000;
       } else {
-        const targetIdx = without.findIndex((t) => t.taskId === targetCardId);
+        const colTasks = without.filter((t) => t.status === targetStatus);
+        const targetIdx = colTasks.findIndex((t) => t.taskId === targetCardId);
         if (targetIdx === -1) {
           newPosition = dragging.taskPosition;
         } else {
           const insertIdx  = insertPos === "bottom" ? targetIdx + 1 : targetIdx;
-          const prevTask   = without[insertIdx - 1];
-          const nextTask   = without[insertIdx];
+          const prevTask   = colTasks[insertIdx - 1];
+          const nextTask   = colTasks[insertIdx];
 
           if (!prevTask) {
             newPosition = (nextTask?.taskPosition ?? 1000) - 1000;
@@ -176,7 +178,7 @@ export function useTasks(): UseTasksResult {
   };
 
   const updateTask = useCallback(
-    async (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) => {
+    async (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) => {
       const task = tasks.find((t) => t.taskId === taskId);
       if (!task || !task._raw) return;
 
@@ -189,6 +191,10 @@ export function useTasks(): UseTasksResult {
                 ...(updates.description !== undefined && { description: updates.description }),
                 ...(updates.priority    !== undefined && { priority:    updates.priority as Task["priority"] }),
                 ...(updates.dueDate     !== undefined && { dueDate:     updates.dueDate }),
+                ...(updates.assigneeName !== undefined && {
+                  assigneeName:     updates.assigneeName || undefined,
+                  assigneeInitials: updates.assigneeName ? updates.assigneeName.slice(0, 2).toUpperCase() : undefined,
+                }),
               }
             : t
         )
@@ -200,6 +206,7 @@ export function useTasks(): UseTasksResult {
         taskDescription: updates.description ?? task._raw.taskDescription,
         taskPriority:    updates.priority    ? (PRIORITY_TO_API[updates.priority] ?? task._raw.taskPriority) : task._raw.taskPriority,
         dueDate:         updates.dueDate !== undefined ? (updates.dueDate || undefined) : task._raw.dueDate,
+        assignedTo:      updates.assigneeName !== undefined ? (updates.assigneeName || undefined) : task._raw.assignedTo,
       };
 
       try {

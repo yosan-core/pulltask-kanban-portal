@@ -2,11 +2,13 @@ import { useState } from "react";
 import { TaskStatus } from "@domain/task";
 import { useTasks } from "@hooks/useTasks";
 import { useBoard } from "@hooks/useBoard";
+import { useUsers } from "@hooks/useUsers";
 import { BoardUI } from "./interface";
 
 export function BoardPage() {
   const { board, loading: boardLoading, error: boardError } = useBoard();
-  const { tasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks();
+  const { tasks: rawTasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks();
+  const { usersByName } = useUsers();
 
   const [draggingId,     setDraggingId]     = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn]  = useState<TaskStatus | null>(null);
@@ -14,6 +16,13 @@ export function BoardPage() {
   const [dragPosition,   setDragPosition]   = useState<"top" | "bottom" | null>(null);
   const [selectedTaskId, setSelectedTaskId]  = useState<string | null>(null);
   const [showNewTask,    setShowNewTask]     = useState(false);
+  const [newTaskStatus,  setNewTaskStatus]   = useState<TaskStatus | null>(null);
+
+  // Cruza cada tarea con la lista de usuarios para pintar la foto del asignado
+  const tasks = rawTasks.map((t) => ({
+    ...t,
+    assigneeProfilePictureUrl: t.assigneeName ? usersByName.get(t.assigneeName)?.profilePictureUrl : undefined,
+  }));
 
   const selectedTask = tasks.find((t) => t.taskId === selectedTaskId) ?? null;
   const loading      = boardLoading || tasksLoading;
@@ -37,12 +46,12 @@ export function BoardPage() {
     updateStatus(taskId, newStatus);
 
   const handleRemoveTask = (taskId: string) => removeTask(taskId);
-  const handleSaveTask   = (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) =>
+  const handleSaveTask   = (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) =>
     updateTask(taskId, updates);
 
   const handleCardClick    = (taskId: string) => setSelectedTaskId(taskId);
   const handleCloseDetail  = ()               => setSelectedTaskId(null);
-  const handleNewTask      = ()               => setShowNewTask(true);
+  const handleAddClick     = (status: TaskStatus) => { setNewTaskStatus(status); setShowNewTask(true); };
   const handleCloseNewTask = ()               => setShowNewTask(false);
   const handleTaskSaved    = ()               => { setShowNewTask(false); reload(); };
 
@@ -76,7 +85,8 @@ export function BoardPage() {
       onCloseDetail={handleCloseDetail}
       onStatusChange={handleStatusChange}
       onSaveTask={handleSaveTask}
-      onNewTask={handleNewTask}
+      newTaskStatus={newTaskStatus}
+      onAddClick={handleAddClick}
       onCloseNewTask={handleCloseNewTask}
       onTaskSaved={handleTaskSaved}
     />

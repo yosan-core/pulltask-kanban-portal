@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Task, TaskStatus, TaskPriority } from "@domain/task";
+import { Task, TaskStatus, TaskPriority, UserProfile } from "@domain/task";
 import { COLUMNS } from "@pages/board/config";
+import { searchAllUsers } from "@services/searchAllUsers";
+import { getUserProfile } from "@services/getUserProfile";
+import { useHeaders } from "@hooks/useHeaders";
+import { useAuthContext } from "@context/authContext";
 
 const priorityConfig: Record<TaskPriority, { label: string; dot: string; badge: string }> = {
   CRITICAL: { label: "Crítica",  dot: "bg-red-600",    badge: "bg-red-600/20 text-red-400 border-red-600/40" },
@@ -27,7 +31,7 @@ interface TaskDetailProps {
   task: Task | null;
   onClose: () => void;
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
-  onSaveTask: (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string }) => void;
+  onSaveTask: (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) => void;
 }
 
 export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDetailProps) {
@@ -46,6 +50,17 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
   const [priority, setPriority] = useState<TaskPriority>("MEDIUM");
   const [dueDate,  setDueDate]  = useState("");
 
+  /* ── assignee picker ── */
+  const [showAssignPicker, setShowAssignPicker] = useState(false);
+  const [users,             setUsers]            = useState<UserProfile[]>([]);
+  const [loadingUsers,      setLoadingUsers]      = useState(false);
+  const [usersError,        setUsersError]        = useState<string | null>(null);
+  const [assigneeFilter,    setAssigneeFilter]    = useState("");
+  const [selfAssigning,     setSelfAssigning]     = useState(false);
+  const assignPickerRef = useRef<HTMLDivElement>(null);
+  const { getHeaders } = useHeaders();
+  const { user: authUser } = useAuthContext();
+
   /* reset when task changes */
   useEffect(() => {
     if (task) {
@@ -55,12 +70,56 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
       setDueDate(task.dueDate ? task.dueDate.slice(0, 10) : "");
       setEditingTitle(false);
       setEditingDesc(false);
+      setShowAssignPicker(false);
     }
   }, [task?.taskId]);
 
   useEffect(() => {
     if (editingTitle) titleInputRef.current?.focus();
   }, [editingTitle]);
+
+  useEffect(() => {
+    if (!showAssignPicker) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (assignPickerRef.current && !assignPickerRef.current.contains(e.target as Node)) {
+        setShowAssignPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [showAssignPicker]);
+
+  const toggleAssignPicker = () => {
+    setShowAssignPicker((v) => !v);
+    setAssigneeFilter("");
+    if (users.length > 0 || loadingUsers) return;
+
+    setLoadingUsers(true);
+    setUsersError(null);
+    searchAllUsers({ Authorization: getHeaders().Authorization })
+      .then(setUsers)
+      .catch(() => setUsersError("No se pudieron cargar los usuarios."))
+      .finally(() => setLoadingUsers(false));
+  };
+
+  const saveAssignee = (name: string) => {
+    if (!task) return;
+    onSaveTask(task.taskId, { assigneeName: name });
+    setShowAssignPicker(false);
+  };
+
+  const handleSelfAssign = () => {
+    if (!task || !authUser) return;
+    setSelfAssigning(true);
+    getUserProfile(authUser.userAccountId, { Authorization: `Bearer ${authUser.token}` })
+      .then((profile) => saveAssignee(profile.fullName))
+      .catch(() => setUsersError("No se pudo asignar la tarea."))
+      .finally(() => setSelfAssigning(false));
+  };
+
+  const filteredUsers = users.filter((u) =>
+    u.fullName.toLowerCase().includes(assigneeFilter.trim().toLowerCase())
+  );
 
   const saveTitle = () => {
     if (!task) return;
@@ -180,8 +239,12 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
                 {/* Description box */}
                 <div className="flex gap-3">
                   {/* Avatar placeholder */}
-                  <div className="w-8 h-8 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                    {task.assigneeInitials ?? "?"}
+                  <div className="w-8 h-8 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {task.assigneeProfilePictureUrl ? (
+                      <img src={task.assigneeProfilePictureUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      task.assigneeInitials ?? "?"
+                    )}
                   </div>
 
                   <div className="flex-1 border border-gh-border rounded-lg overflow-hidden">
@@ -267,16 +330,90 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                   </svg>
                 }>
-                  {task.assigneeName ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0">
-                        {task.assigneeInitials}
-                      </div>
-                      <span className="text-xs text-gh-text">{task.assigneeName}</span>
+                  <div className="relative" ref={assignPickerRef}>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <button
+                        onClick={toggleAssignPicker}
+                        className="flex items-center gap-2 min-w-0 px-1 py-1 -mx-1 rounded-md hover:bg-gh-card transition-colors"
+                      >
+                        {task.assigneeName ? (
+                          <>
+                            <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {task.assigneeProfilePictureUrl ? (
+                                <img src={task.assigneeProfilePictureUrl} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                task.assigneeInitials
+                              )}
+                            </div>
+                            <span className="text-xs text-gh-text truncate">{task.assigneeName}</span>
+                          </>
+                        ) : (
+                          <p className="text-xs text-gh-muted">Sin asignar</p>
+                        )}
+                      </button>
+                      {!task.assigneeName && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleSelfAssign(); }}
+                          disabled={selfAssigning}
+                          className="text-xs text-gh-blue hover:underline flex-shrink-0 disabled:opacity-50"
+                        >
+                          {selfAssigning ? "Asignando…" : "Asignarme"}
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-gh-muted mt-1">Sin asignar</p>
-                  )}
+
+                    {showAssignPicker && (
+                      <div className="absolute left-0 top-8 z-50 w-60 rounded-lg border border-gh-border bg-[#161b22] shadow-xl py-1">
+                        <div className="px-2 pb-1.5 mb-1 border-b border-gh-border">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={assigneeFilter}
+                            onChange={(e) => setAssigneeFilter(e.target.value)}
+                            placeholder="Buscar persona…"
+                            className="w-full bg-gh-surface border border-gh-border rounded-md px-2 py-1 text-xs text-gh-text placeholder-gh-muted outline-none focus:border-gh-blue transition-colors"
+                          />
+                        </div>
+                        {loadingUsers && (
+                          <p className="px-3 py-2 text-xs text-gh-muted">Cargando…</p>
+                        )}
+                        {usersError && (
+                          <p className="px-3 py-2 text-xs text-red-400">{usersError}</p>
+                        )}
+                        {!loadingUsers && !usersError && (
+                          <>
+                            <button
+                              onClick={() => saveAssignee("")}
+                              className="w-full text-left px-3 py-1.5 text-xs text-gh-muted hover:bg-gh-card hover:text-gh-text transition-colors"
+                            >
+                              Sin asignar
+                            </button>
+                            <div className="border-t border-gh-border my-1" />
+                            {filteredUsers.length === 0 ? (
+                              <p className="px-3 py-2 text-xs text-gh-muted">Sin resultados</p>
+                            ) : (
+                              filteredUsers.map((u) => (
+                                <button
+                                  key={u.userAccountId}
+                                  onClick={() => saveAssignee(u.fullName)}
+                                  className="w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs text-gh-text hover:bg-gh-card transition-colors"
+                                >
+                                  <div className="w-5 h-5 rounded-full bg-brand-500 text-white text-[9px] font-bold flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    {u.profilePictureUrl ? (
+                                      <img src={u.profilePictureUrl} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                      u.fullName.slice(0, 2).toUpperCase()
+                                    )}
+                                  </div>
+                                  <span className="truncate">{u.fullName}</span>
+                                </button>
+                              ))
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </SideSection>
 
                 <Divider />
