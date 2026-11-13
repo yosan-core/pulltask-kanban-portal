@@ -1,12 +1,12 @@
 import { useState, useEffect, FormEvent } from "react";
 import { TaskPriority, TaskStatus, Task, AuthUser } from "@domain/task";
-import { BoardContext } from "@domain/board";
+import { ProjectContext } from "@domain/project";
 import { saveTask } from "@services/saveTask";
 import { useHeaders } from "@hooks/useHeaders";
 
 interface NewTaskFormProps {
   open:          boolean;
-  board:         BoardContext | null;
+  project:       ProjectContext | null;
   tasks:         Task[];
   user:          AuthUser | null;
   defaultStatus?: TaskStatus;
@@ -28,7 +28,7 @@ const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
   { value: "DONE",        label: "Completado"   },
 ];
 
-export function NewTaskForm({ open, board, tasks, user, defaultStatus, onClose, onSaved }: NewTaskFormProps) {
+export function NewTaskForm({ open, project, tasks, user, defaultStatus, onClose, onSaved }: NewTaskFormProps) {
   const [title,       setTitle]       = useState("");
   const [description, setDescription] = useState("");
   const [priority,    setPriority]    = useState<TaskPriority>("MEDIUM");
@@ -44,8 +44,8 @@ export function NewTaskForm({ open, board, tasks, user, defaultStatus, onClose, 
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!board || !user) {
-      setError("Contexto de tablero no disponible.");
+    if (!project || !user) {
+      setError("Contexto del proyecto no disponible.");
       return;
     }
     if (!title.trim()) {
@@ -57,7 +57,7 @@ export function NewTaskForm({ open, board, tasks, user, defaultStatus, onClose, 
     setError(null);
     try {
       await saveTask(
-        { board, tasks, user, title: title.trim(), description: description.trim() || undefined, priority, status },
+        { project, tasks, user, title: title.trim(), description: description.trim() || undefined, priority, status },
         getHeaders()
       );
       // Reset form

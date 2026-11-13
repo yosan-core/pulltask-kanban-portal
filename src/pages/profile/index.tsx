@@ -22,7 +22,7 @@ export function ProfilePage() {
       onChangePictureFile={onChangePictureFile}
       onSavePicture={onSavePicture}
       onRemovePicture={onRemovePicture}
-      onBack={() => navigate("/board")}
+      onBack={() => navigate("/projects")}
     />
   );
 }

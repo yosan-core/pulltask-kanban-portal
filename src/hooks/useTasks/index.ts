@@ -16,7 +16,8 @@ interface UseTasksResult {
   reload:       () => void;
 }
 
-export function useTasks(): UseTasksResult {
+// Tasks of one project: the backend only returns them if the user is a member of it
+export function useTasks(projectId: string | undefined): UseTasksResult {
   const [tasks,   setTasks]   = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
@@ -31,10 +32,15 @@ export function useTasks(): UseTasksResult {
     const isInitialLoad = tick === 0;
 
     const fetchTasks = async () => {
+      if (!projectId) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
       if (isInitialLoad) setLoading(true);
       setError(null);
       try {
-        const apiTasks = await searchAllTasks(getHeaders());
+        const apiTasks = await searchAllTasks(getHeaders(), { projectId });
         if (!cancelled) {
           setTasks(apiTasks.map(apiTaskToTask).sort((a, b) => a.taskPosition - b.taskPosition));
         }
@@ -50,7 +56,7 @@ export function useTasks(): UseTasksResult {
 
     fetchTasks();
     return () => { cancelled = true; };
-  }, [tick]);
+  }, [tick, projectId]);
 
   const updateStatus = useCallback(
     async (taskId: string, newStatus: TaskStatus) => {

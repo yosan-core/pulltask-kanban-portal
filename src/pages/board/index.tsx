@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { TaskStatus } from "@domain/task";
 import { useTasks } from "@hooks/useTasks";
-import { useBoard } from "@hooks/useBoard";
+import { useProject } from "@hooks/useProject";
 import { useUsers } from "@hooks/useUsers";
 import { BoardUI } from "./interface";
 
 export function BoardPage() {
-  const { board, loading: boardLoading, error: boardError } = useBoard();
-  const { tasks: rawTasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks();
+  const { projectId } = useParams<{ projectId: string }>();
+  const { project, loading: projectLoading, error: projectError, notFound } = useProject(projectId);
+  const { tasks: rawTasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks(project?.projectId);
   const { usersByName } = useUsers();
 
   const [draggingId,     setDraggingId]     = useState<string | null>(null);
@@ -25,8 +27,8 @@ export function BoardPage() {
   }));
 
   const selectedTask = tasks.find((t) => t.taskId === selectedTaskId) ?? null;
-  const loading      = boardLoading || tasksLoading;
-  const serviceError = boardError ?? tasksError;
+  const loading      = projectLoading || (!!project && tasksLoading);
+  const serviceError = projectError ?? tasksError;
 
   const handleDragStart      = (taskId: string)   => setDraggingId(taskId);
   const handleDragEnd        = ()                  => { setDraggingId(null); setDragOverColumn(null); setDragOverCardId(null); setDragPosition(null); };
@@ -63,11 +65,22 @@ export function BoardPage() {
     );
   }
 
+  if (notFound) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-3 bg-gh-surface text-sm">
+        <p className="text-gh-text">Este proyecto no existe o no eres miembro de él.</p>
+        <Link to="/projects" className="text-brand-500 hover:text-brand-400 font-medium">
+          Volver a mis proyectos
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <BoardUI
       tasks={tasks}
-      board={board}
-      projectName={board?.boardName ?? "PullTask"}
+      project={project}
+      projectName={project?.projectName ?? "PullTask"}
       serviceError={serviceError}
       draggingId={draggingId}
       dragOverColumn={dragOverColumn}
