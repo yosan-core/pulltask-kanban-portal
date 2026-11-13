@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { environment, fetchTimeoutServices } from "@config/environment";
+import { handleUnauthorized } from "@api/handleUnauthorized";
 
 const taskBoardQueryInstance: AxiosInstance = axios.create({
   baseURL: environment.TASK_API_URL,
@@ -13,6 +14,9 @@ taskBoardQueryInstance.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
     if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        handleUnauthorized();
+      }
       if (error.code === "ECONNABORTED") {
         console.error("[taskBoardQueryInstance] Request timed out");
       }
