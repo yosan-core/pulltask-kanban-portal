@@ -1,5 +1,6 @@
 import { Task, TaskStatus } from "@domain/task";
-import { BoardContext } from "@domain/board";
+import { Link } from "react-router-dom";
+import { ProjectContext } from "@domain/project";
 import { COLUMNS } from "./config";
 import { KanbanColumn } from "@components/board/KanbanColumn";
 import { TaskDetail } from "@components/board/TaskDetail";
@@ -9,7 +10,7 @@ import { useAuthContext } from "@context/authContext";
 
 interface BoardUIProps {
   tasks:            Task[];
-  board:            BoardContext | null;
+  project:          ProjectContext | null;
   projectName:      string;
   serviceError:     string | null;
   draggingId:       string | null;
@@ -36,7 +37,7 @@ interface BoardUIProps {
 
 export function BoardUI({
   tasks,
-  board,
+  project,
   projectName,
   serviceError,
   draggingId,
@@ -73,7 +74,7 @@ export function BoardUI({
             <span className="text-brand-500">Task</span>
           </span>
           <span>/</span>
-          <span className="text-gh-text font-semibold">Projects</span>
+          <Link to="/projects" className="text-gh-text font-semibold hover:text-brand-500">Projects</Link>
           <span>/</span>
           <span className="text-gh-text font-semibold">{projectName}</span>
         </div>
@@ -165,7 +166,7 @@ export function BoardUI({
       {/* Panel de nueva tarea */}
       <NewTaskForm
         open={showNewTask}
-        board={board}
+        project={project}
         tasks={tasks}
         user={user}
         defaultStatus={newTaskStatus ?? undefined}

@@ -4,7 +4,7 @@ export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 // Raw shape returned by task-board-query-process-service
 export interface ApiTask {
   taskId:           string;
-  boardId:          string;
+  projectId:        string;
   columnId:         string;
   taskNumber:       number;
   taskTitle:        string;

@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from "axios";
 import { maxRetriesServices } from "@config/environment";
 import { taskBoardCmdInstance } from "@api/taskBoardCmdInstance";
-import type { BoardContext } from "@domain/board";
+import type { ProjectContext } from "@domain/project";
 import type { Task, TaskPriority } from "@domain/task";
 import type { AuthUser } from "@domain/task";
 
@@ -14,7 +14,7 @@ const PRIORITY_TO_API: Record<TaskPriority, string> = {
 };
 
 interface SaveTaskPayload {
-  board:    BoardContext;
+  project:  ProjectContext;
   tasks:    Task[];
   user:     AuthUser;
   title:    string;
@@ -27,9 +27,9 @@ async function saveTask(
   payload: SaveTaskPayload,
   headers: Record<string, string> = {}
 ): Promise<void> {
-  const { board, tasks, user, title, description, priority, status } = payload;
+  const { project, tasks, user, title, description, priority, status } = payload;
 
-  const columnId = board.columnIdByStatus[status];
+  const columnId = project.columnIdByStatus[status];
   if (!columnId) throw new Error(`No columnId for status ${status}`);
 
   const now = new Date().toISOString();
@@ -44,7 +44,7 @@ async function saveTask(
 
   const body = {
     taskId:            crypto.randomUUID(),
-    boardId:           board.boardId,
+    projectId:         project.projectId,
     columnId,
     taskNumber,
     taskTitle:         title,

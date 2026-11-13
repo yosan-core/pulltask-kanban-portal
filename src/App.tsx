@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@pages/protectedRoute";
 import { BoardPage } from "@pages/board";
+import { ProjectsPage } from "@pages/projects";
 import { ProfilePage } from "@pages/profile";
 import { environment } from "@config/environment";
 import { useAuthContext } from "@context/authContext";
@@ -9,7 +10,7 @@ function NoAuth() {
   const { isAuthenticated } = useAuthContext();
 
   if (isAuthenticated) {
-    return <Navigate to="/board" replace />;
+    return <Navigate to="/projects" replace />;
   }
 
   return (
@@ -35,7 +36,15 @@ function App() {
   return (
     <Routes>
       <Route
-        path="/board"
+        path="/projects"
+        element={
+          <ProtectedRoute>
+            <ProjectsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
         element={
           <ProtectedRoute>
             <BoardPage />
@@ -51,8 +60,9 @@ function App() {
         }
       />
       <Route path="/no-auth" element={<NoAuth />} />
-      <Route path="/" element={<Navigate to="/board" replace />} />
-      <Route path="*" element={<Navigate to="/board" replace />} />
+      <Route path="/board" element={<Navigate to="/projects" replace />} />
+      <Route path="/" element={<Navigate to="/projects" replace />} />
+      <Route path="*" element={<Navigate to="/projects" replace />} />
     </Routes>
   );
 }
