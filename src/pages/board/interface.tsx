@@ -6,6 +6,7 @@ import { COLUMNS } from "./config";
 import { KanbanColumn } from "@components/board/KanbanColumn";
 import { TaskDetail } from "@components/board/TaskDetail";
 import { NewTaskForm } from "@components/board/NewTaskForm";
+import { MembersPanel } from "@components/board/MembersPanel";
 import { ProfileMenu } from "@components/layout/ProfileMenu";
 import { useAuthContext } from "@context/authContext";
 
@@ -13,6 +14,12 @@ interface BoardUIProps {
   tasks:            Task[];
   project:          ProjectContext | null;
   members:          ProjectMember[];
+  membersLoading:   boolean;
+  membersError:     string | null;
+  showMembers:      boolean;
+  onOpenMembers:    () => void;
+  onCloseMembers:   () => void;
+  onMembersChanged: () => void;
   projectName:      string;
   serviceError:     string | null;
   draggingId:       string | null;
@@ -41,6 +48,12 @@ export function BoardUI({
   tasks,
   project,
   members,
+  membersLoading,
+  membersError,
+  showMembers,
+  onOpenMembers,
+  onCloseMembers,
+  onMembersChanged,
   projectName,
   serviceError,
   draggingId,
@@ -90,6 +103,19 @@ export function BoardUI({
       <div className="px-6 py-4 border-b border-gh-border flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-semibold text-gh-text">{projectName}</h1>
+          <button
+            onClick={onOpenMembers}
+            className="flex items-center gap-2 px-3 py-1 rounded-md border border-gh-border text-sm text-gh-text hover:bg-gh-card transition-colors"
+          >
+            <span className="flex -space-x-1.5">
+              {members.slice(0, 3).map((m) => (
+                <span key={m.projectMemberId} className="w-5 h-5 rounded-full bg-brand-500 text-white text-[9px] font-bold flex items-center justify-center overflow-hidden ring-2 ring-gh-surface">
+                  {m.profilePictureUrl ? <img src={m.profilePictureUrl} alt="" className="w-full h-full object-cover" /> : m.fullName.slice(0, 2).toUpperCase()}
+                </span>
+              ))}
+            </span>
+            Miembros{members.length > 0 && <span className="text-gh-muted">{members.length}</span>}
+          </button>
         </div>
         <div className="flex items-center gap-1">
           {["Sprint 1", "Sprint 2"].map((sprint, i) => (
@@ -165,6 +191,18 @@ export function BoardUI({
         onClose={onCloseDetail}
         onStatusChange={onStatusChange}
         onSaveTask={onSaveTask}
+      />
+
+      {/* Panel de miembros */}
+      <MembersPanel
+        open={showMembers}
+        projectId={project?.projectId}
+        members={members}
+        loading={membersLoading}
+        error={membersError}
+        currentUserId={user?.userAccountId}
+        onClose={onCloseMembers}
+        onChanged={onMembersChanged}
       />
 
       {/* Panel de nueva tarea */}
