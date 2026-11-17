@@ -43,8 +43,11 @@ export function useProjectMembers(projectId: string | undefined): UseProjectMemb
           const profile = profileById.get(m.userId);
           return {
             projectMemberId:   m.projectMemberId,
+            projectId:         m.projectId,
             userId:            m.userId,
             role:              m.memberRole,
+            invitedBy:         m.invitedBy,
+            joinedAt:          m.joinedAt,
             fullName:          profile?.fullName || "Usuario",
             profilePictureUrl: profile?.profilePictureUrl,
           };

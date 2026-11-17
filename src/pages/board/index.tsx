@@ -10,7 +10,8 @@ export function BoardPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { project, loading: projectLoading, error: projectError, notFound } = useProject(projectId);
   const { tasks: rawTasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks(project?.projectId);
-  const { members } = useProjectMembers(project?.projectId);
+  const { members, loading: membersLoading, error: membersError, reload: reloadMembers } = useProjectMembers(project?.projectId);
+  const [showMembers,    setShowMembers]     = useState(false);
 
   const [draggingId,     setDraggingId]     = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn]  = useState<TaskStatus | null>(null);
@@ -82,6 +83,12 @@ export function BoardPage() {
       tasks={tasks}
       project={project}
       members={members}
+      membersLoading={membersLoading}
+      membersError={membersError}
+      showMembers={showMembers}
+      onOpenMembers={() => setShowMembers(true)}
+      onCloseMembers={() => setShowMembers(false)}
+      onMembersChanged={reloadMembers}
       projectName={project?.projectName ?? "PullTask"}
       serviceError={serviceError}
       draggingId={draggingId}
