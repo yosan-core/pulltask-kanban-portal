@@ -1,6 +1,7 @@
 import { Task, TaskStatus } from "@domain/task";
 import { Link } from "react-router-dom";
 import { ProjectContext } from "@domain/project";
+import type { ProjectMember } from "@domain/projectMember";
 import { COLUMNS } from "./config";
 import { KanbanColumn } from "@components/board/KanbanColumn";
 import { TaskDetail } from "@components/board/TaskDetail";
@@ -11,6 +12,7 @@ import { useAuthContext } from "@context/authContext";
 interface BoardUIProps {
   tasks:            Task[];
   project:          ProjectContext | null;
+  members:          ProjectMember[];
   projectName:      string;
   serviceError:     string | null;
   draggingId:       string | null;
@@ -38,6 +40,7 @@ interface BoardUIProps {
 export function BoardUI({
   tasks,
   project,
+  members,
   projectName,
   serviceError,
   draggingId,
@@ -158,6 +161,7 @@ export function BoardUI({
       {/* Panel lateral de detalle */}
       <TaskDetail
         task={selectedTask}
+        members={members}
         onClose={onCloseDetail}
         onStatusChange={onStatusChange}
         onSaveTask={onSaveTask}
