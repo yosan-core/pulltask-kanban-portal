@@ -3,14 +3,14 @@ import { Link, useParams } from "react-router-dom";
 import { TaskStatus } from "@domain/task";
 import { useTasks } from "@hooks/useTasks";
 import { useProject } from "@hooks/useProject";
-import { useUsers } from "@hooks/useUsers";
+import { useProjectMembers } from "@hooks/useProjectMembers";
 import { BoardUI } from "./interface";
 
 export function BoardPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const { project, loading: projectLoading, error: projectError, notFound } = useProject(projectId);
   const { tasks: rawTasks, loading: tasksLoading, error: tasksError, updateStatus, reorderTask, removeTask, updateTask, reload } = useTasks(project?.projectId);
-  const { usersByName } = useUsers();
+  const { members } = useProjectMembers(project?.projectId);
 
   const [draggingId,     setDraggingId]     = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn]  = useState<TaskStatus | null>(null);
@@ -20,10 +20,11 @@ export function BoardPage() {
   const [showNewTask,    setShowNewTask]     = useState(false);
   const [newTaskStatus,  setNewTaskStatus]   = useState<TaskStatus | null>(null);
 
-  // Cruza cada tarea con la lista de usuarios para pintar la foto del asignado
+  // Cruza cada tarea con los miembros del proyecto para pintar la foto del asignado
+  const membersByName = new Map(members.map((m) => [m.fullName, m]));
   const tasks = rawTasks.map((t) => ({
     ...t,
-    assigneeProfilePictureUrl: t.assigneeName ? usersByName.get(t.assigneeName)?.profilePictureUrl : undefined,
+    assigneeProfilePictureUrl: t.assigneeName ? membersByName.get(t.assigneeName)?.profilePictureUrl : undefined,
   }));
 
   const selectedTask = tasks.find((t) => t.taskId === selectedTaskId) ?? null;
@@ -80,6 +81,7 @@ export function BoardPage() {
     <BoardUI
       tasks={tasks}
       project={project}
+      members={members}
       projectName={project?.projectName ?? "PullTask"}
       serviceError={serviceError}
       draggingId={draggingId}

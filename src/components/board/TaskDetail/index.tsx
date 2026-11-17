@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Task, TaskStatus, TaskPriority, UserProfile } from "@domain/task";
+import { Task, TaskStatus, TaskPriority } from "@domain/task";
+import { ASSIGNABLE_ROLES, type ProjectMember } from "@domain/projectMember";
 import { COLUMNS } from "@pages/board/config";
-import { searchAllUsers } from "@services/searchAllUsers";
 import { getUserProfile } from "@services/getUserProfile";
-import { useHeaders } from "@hooks/useHeaders";
 import { useAuthContext } from "@context/authContext";
 
 const priorityConfig: Record<TaskPriority, { label: string; dot: string; badge: string }> = {
@@ -29,12 +28,13 @@ const statusConfig: Record<TaskStatus, { label: string; icon: string; cls: strin
 
 interface TaskDetailProps {
   task: Task | null;
+  members: ProjectMember[];
   onClose: () => void;
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   onSaveTask: (taskId: string, updates: { title?: string; description?: string; priority?: string; dueDate?: string; assigneeName?: string }) => void;
 }
 
-export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDetailProps) {
+export function TaskDetail({ task, members, onClose, onStatusChange, onSaveTask }: TaskDetailProps) {
   const isOpen = task !== null;
 
   /* ── title inline edit ── */
@@ -52,13 +52,10 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
 
   /* ── assignee picker ── */
   const [showAssignPicker, setShowAssignPicker] = useState(false);
-  const [users,             setUsers]            = useState<UserProfile[]>([]);
-  const [loadingUsers,      setLoadingUsers]      = useState(false);
   const [usersError,        setUsersError]        = useState<string | null>(null);
   const [assigneeFilter,    setAssigneeFilter]    = useState("");
   const [selfAssigning,     setSelfAssigning]     = useState(false);
   const assignPickerRef = useRef<HTMLDivElement>(null);
-  const { getHeaders } = useHeaders();
   const { user: authUser } = useAuthContext();
 
   /* reset when task changes */
@@ -92,14 +89,7 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
   const toggleAssignPicker = () => {
     setShowAssignPicker((v) => !v);
     setAssigneeFilter("");
-    if (users.length > 0 || loadingUsers) return;
-
-    setLoadingUsers(true);
     setUsersError(null);
-    searchAllUsers({ Authorization: getHeaders().Authorization })
-      .then(setUsers)
-      .catch(() => setUsersError("No se pudieron cargar los usuarios."))
-      .finally(() => setLoadingUsers(false));
   };
 
   const saveAssignee = (name: string) => {
@@ -110,6 +100,11 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
 
   const handleSelfAssign = () => {
     if (!task || !authUser) return;
+    const me = members.find((m) => m.userId === authUser.userAccountId);
+    if (me) {
+      saveAssignee(me.fullName);
+      return;
+    }
     setSelfAssigning(true);
     getUserProfile(authUser.userAccountId, { Authorization: `Bearer ${authUser.token}` })
       .then((profile) => saveAssignee(profile.fullName))
@@ -117,8 +112,10 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
       .finally(() => setSelfAssigning(false));
   };
 
-  const filteredUsers = users.filter((u) =>
-    u.fullName.toLowerCase().includes(assigneeFilter.trim().toLowerCase())
+  // Only members of the project who can work on tasks can be assigned (viewers are read only)
+  const filteredUsers = members.filter((m) =>
+    ASSIGNABLE_ROLES.includes(m.role) &&
+    m.fullName.toLowerCase().includes(assigneeFilter.trim().toLowerCase())
   );
 
   const saveTitle = () => {
@@ -374,13 +371,10 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
                             className="w-full bg-gh-surface border border-gh-border rounded-md px-2 py-1 text-xs text-gh-text placeholder-gh-muted outline-none focus:border-gh-blue transition-colors"
                           />
                         </div>
-                        {loadingUsers && (
-                          <p className="px-3 py-2 text-xs text-gh-muted">Cargando…</p>
-                        )}
                         {usersError && (
                           <p className="px-3 py-2 text-xs text-red-400">{usersError}</p>
                         )}
-                        {!loadingUsers && !usersError && (
+                        {!usersError && (
                           <>
                             <button
                               onClick={() => saveAssignee("")}
@@ -394,7 +388,7 @@ export function TaskDetail({ task, onClose, onStatusChange, onSaveTask }: TaskDe
                             ) : (
                               filteredUsers.map((u) => (
                                 <button
-                                  key={u.userAccountId}
+                                  key={u.userId}
                                   onClick={() => saveAssignee(u.fullName)}
                                   className="w-full flex items-center gap-2 text-left px-3 py-1.5 text-xs text-gh-text hover:bg-gh-card transition-colors"
                                 >
